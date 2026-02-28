@@ -1,0 +1,6 @@
+Place your icon files here:
+- icon.ico       (256x256, used as the app window icon and installer icon)
+- tray-icon.ico  (16x16 and 32x32, used in the system tray)
+
+The app will start without these files but no icons will be shown.
+Free ICO editors: https://www.icoconverter.com  or  IrfanView

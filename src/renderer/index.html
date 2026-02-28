@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <link rel="stylesheet" href="styles.css">
+  <title>CAPSLOCK</title>
+</head>
+<body>
+  <div id="app">
+    <header id="header">
+      <span class="app-name">CAPSLOCK</span>
+      <div class="header-right">
+        <button id="lang-btn" class="lang-btn">EN</button>
+        <div class="toggle-wrap">
+          <span class="toggle-label" id="status-label">已启用</span>
+          <label class="toggle">
+            <input type="checkbox" id="enabled-toggle" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </header>
+    <div id="banner-compat" style="display:none;" class="banner-warning">
+      <span id="banner-text" data-i18n="banner.warning">Caps Lock 未被完全抑制 — LED 指示灯可能仍会闪烁。</span>
+      <button id="banner-btn" class="btn btn-accent" data-i18n="banner.enableBtn" style="padding:4px 12px;font-size:11px;">启用完全抑制（需要重启）</button>
+      <button id="banner-dismiss" class="btn" style="padding:4px 8px;font-size:11px;">✕</button>
+    </div>
+    <div id="content">
+      <aside id="sidebar">
+        <div class="sidebar-header" data-i18n="sidebar.profiles">配置方案</div>
+        <div class="profile-list" id="profile-list"></div>
+        <button class="add-profile-btn" id="add-profile-btn" data-i18n="sidebar.addProfile">+ 新建配置</button>
+        <div class="sidebar-footer">
+          <div class="active-app-label" data-i18n="sidebar.activeApp">当前应用</div>
+          <div class="active-app-value" id="active-app-display">—</div>
+        </div>
+      </aside>
+      <main id="editor">
+        <div class="empty-state" id="empty-state" data-i18n="editor.emptyState">请选择一个配置方案进行编辑</div>
+        <div id="profile-editor" style="display:none;"></div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

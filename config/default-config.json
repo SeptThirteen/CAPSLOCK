@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "enabled": true,
+  "macroSpeedMs": 10,
+  "profiles": [
+    {
+      "id": "default",
+      "name": "Default",
+      "matcher": null,
+      "mapping": {
+        "type": "key",
+        "key": "escape"
+      }
+    }
+  ]
+}
