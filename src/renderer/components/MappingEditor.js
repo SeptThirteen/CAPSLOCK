@@ -16,6 +16,7 @@ export function createMappingEditor (initialMapping, onRecordRequest) {
         <button class="radio-btn ${mapping.type === 'key' ? 'selected' : ''}" data-type="key">${t('mapping.typeKey')}</button>
         <button class="radio-btn ${mapping.type === 'combo' ? 'selected' : ''}" data-type="combo">${t('mapping.typeCombo')}</button>
         <button class="radio-btn ${mapping.type === 'macro' ? 'selected' : ''}" data-type="macro">${t('mapping.typeMacro')}</button>
+        <button class="radio-btn ${mapping.type === 'disable' ? 'selected' : ''}" data-type="disable">${t('mapping.typeDisable')}</button>
       </div>
       <div id="mapping-body"></div>
     `
@@ -27,6 +28,7 @@ export function createMappingEditor (initialMapping, onRecordRequest) {
         if (type === 'key') Object.assign(mapping, { key: 'escape' })
         else if (type === 'combo') Object.assign(mapping, { keys: [] })
         else if (type === 'macro') Object.assign(mapping, { sequence: [] })
+        else if (type === 'disable') { delete mapping.key; delete mapping.keys; delete mapping.sequence }
         render()
       })
     })
@@ -39,6 +41,7 @@ export function createMappingEditor (initialMapping, onRecordRequest) {
     if (mapping.type === 'key') renderKeyEditor(body)
     else if (mapping.type === 'combo') renderComboEditor(body)
     else if (mapping.type === 'macro') renderMacroEditor(body)
+    else if (mapping.type === 'disable') renderDisableEditor(body)
   }
 
   function renderKeyEditor (body) {
@@ -176,6 +179,12 @@ export function createMappingEditor (initialMapping, onRecordRequest) {
       })
       container.appendChild(row)
     })
+  }
+
+  function renderDisableEditor (body) {
+    body.innerHTML = `
+      <p class="notice" style="margin-top:4px;">${t('mapping.disableNotice')}</p>
+    `
   }
 
   function buildStepValueField (step) {

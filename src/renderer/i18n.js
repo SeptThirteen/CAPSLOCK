@@ -7,7 +7,9 @@ const translations = {
     header: {
       enabled:    'Enabled',
       disabled:   'Disabled',
-      langSwitch: '中文'
+      langSwitch: '中文',
+      themeDark:  'Dark',
+      themeLight: 'Light'
     },
     banner: {
       warning:     'Caps Lock is not fully suppressed — LED may still toggle.',
@@ -48,6 +50,7 @@ const translations = {
       typeKey:            'Single Key',
       typeCombo:          'Combo',
       typeMacro:          'Macro',
+      typeDisable:        'Disabled',
       keyLabel:           'Key',
       keyPlaceholder:     'escape, ctrl, f5, a\u2026',
       recordKeyBtn:       'Record Key',
@@ -64,7 +67,8 @@ const translations = {
       stepType:           'type',
       stepDelay:          'delay (ms)',
       stepKeyPlaceholder: 'escape, ctrl, a, f5\u2026',
-      stepTypePlaceholder:'text to type\u2026'
+      stepTypePlaceholder:'text to type\u2026',
+      disableNotice:      'CapsLock will do nothing when this profile is active. Useful for games or full-screen apps.'
     },
     recording: {
       listening: '\u23fa Listening\u2026'
@@ -75,7 +79,9 @@ const translations = {
     header: {
       enabled:    '\u5df2\u542f\u7528',
       disabled:   '\u5df2\u7981\u7528',
-      langSwitch: 'EN'
+      langSwitch: 'EN',
+      themeDark:  '\u6df1\u8272',
+      themeLight: '\u6d45\u8272'
     },
     banner: {
       warning:     'Caps Lock \u672a\u88ab\u5b8c\u5168\u6291\u5236 \u2014 LED \u6307\u793a\u706f\u53ef\u80fd\u4ecd\u4f1a\u95ea\u70c1\u3002',
@@ -116,6 +122,7 @@ const translations = {
       typeKey:            '\u5355\u952e',
       typeCombo:          '\u7ec4\u5408\u952e',
       typeMacro:          '\u5b8f',
+      typeDisable:        '\u7981\u7528',
       keyLabel:           '\u6309\u952e',
       keyPlaceholder:     'escape, ctrl, f5, a\u2026',
       recordKeyBtn:       '\u5f55\u5236\u6309\u952e',
@@ -132,7 +139,8 @@ const translations = {
       stepType:           '\u8f93\u5165\u6587\u5b57',
       stepDelay:          '\u5ef6\u8fdf\uff08\u6beb\u79d2\uff09',
       stepKeyPlaceholder: 'escape, ctrl, a, f5\u2026',
-      stepTypePlaceholder:'\u8981\u8f93\u5165\u7684\u6587\u5b57\u2026'
+      stepTypePlaceholder:'\u8981\u8f93\u5165\u7684\u6587\u5b57\u2026',
+      disableNotice:      '\u5f53\u6b64\u914d\u7f6e\u65b9\u6848\u6fc0\u6d3b\u65f6\uff0cCapsLock \u4e0d\u6267\u884c\u4efb\u4f55\u64cd\u4f5c\u3002\u9002\u7528\u4e8e\u6e38\u620f\u6216\u5168\u5c4f\u5e94\u7528\u3002'
     },
     recording: {
       listening: '\u23fa \u76d1\u542c\u4e2d\u2026'

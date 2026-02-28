@@ -104,6 +104,7 @@ function handleKeydown (event) {
 
     const profile = getProfileManager().getActiveProfile()
     if (profile && profile.mapping) {
+      if (profile.mapping.type === 'disable') return
       setImmediate(() => getKeySimulator().simulateMapping(profile.mapping))
     }
     return

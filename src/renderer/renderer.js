@@ -28,6 +28,7 @@ const $statusLabel    = document.getElementById('status-label')
 const $emptyState     = document.getElementById('empty-state')
 const $profileEditor  = document.getElementById('profile-editor')
 const $langBtn        = document.getElementById('lang-btn')
+const $themeBtn       = document.getElementById('theme-btn')
 
 // ── Banner refs ───────────────────────────────────────────────────────────────
 
@@ -52,12 +53,30 @@ function applyI18n () {
   if (state.selectedId) openProfileEditor(state.selectedId)
   // Sync tray menu language in main process
   window.capslock.setLang(getLang())
+  // Update theme button title for new language
+  applyTheme()
 }
 
 window.addEventListener('langchange', applyI18n)
 
 $langBtn.addEventListener('click', () => {
   setLang(getLang() === 'zh' ? 'en' : 'zh')
+})
+
+// ── Theme ────────────────────────────────────────────────────────────────────
+
+function applyTheme () {
+  const theme = localStorage.getItem('capslock:theme') || 'dark'
+  document.documentElement.setAttribute('data-theme', theme)
+  $themeBtn.textContent = theme === 'dark' ? '\u263D' : '\u2600'
+  $themeBtn.title = theme === 'dark' ? t('header.themeDark') : t('header.themeLight')
+}
+
+$themeBtn.addEventListener('click', () => {
+  const current = localStorage.getItem('capslock:theme') || 'dark'
+  const next = current === 'dark' ? 'light' : 'dark'
+  localStorage.setItem('capslock:theme', next)
+  applyTheme()
 })
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
@@ -68,6 +87,7 @@ async function init () {
 
   // Apply initial translations
   applyI18n()
+  applyTheme()
 
   // Show suppression banner if Caps Lock is not remapped at the OS level
   const { remapped } = await window.capslock.getRegistryStatus()

@@ -167,6 +167,9 @@ async function simulateMapping (mapping) {
         break
       }
 
+      case 'disable':
+        break
+
       default:
         console.warn('[key-simulator] Unknown mapping type:', mapping.type)
     }
