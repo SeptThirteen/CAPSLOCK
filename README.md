@@ -86,10 +86,24 @@ npm config set prefix "%USERPROFILE%\npm-global"
 npm start
 ```
 
+如果你需要测试"启用完全抑制（写入注册表）"，请使用管理员权限启动终端后再运行 `npm start`。
+
+PowerShell（推荐）：
+
+```powershell
+Start-Process powershell -Verb RunAs -WorkingDirectory "C:\\Users\\14238\\Desktop\\code\\CAPSLOCK"
+```
+
+在新打开的管理员 PowerShell 中执行：
+
+```powershell
+npm start
+```
+
 启动成功的标志：
 
 - 系统托盘区域出现 CAPSLOCK 图标
-- 终端打印 `[hook] mode=DIRECT(CapsLock)  keycode=0x3a`，表示键盘钩子已激活
+- 终端打印 `[hook] Starting with hook-based CapsLock suppression`，表示键盘钩子已激活
 - 如弹出 Windows 防火墙窗口，点击"允许访问"
 
 ### 全部脚本命令
@@ -99,6 +113,33 @@ npm start
 | `npm start` | 启动应用（正常模式） |
 | `npm run dev` | 启动并开启 Node.js 调试端口 5858（Chrome DevTools 可附加） |
 | `npm run build` | 打包为 Windows NSIS 安装程序（.exe），输出到 `dist/` 目录 |
+| `npm run build:portable` | 打包为便携版单文件 EXE（免安装），并自动检查符号链接权限 |
+| `npm run release` | 一键发布：优先便携 EXE，失败时自动回退为 `win-unpacked.zip` |
+
+### 给其他人直接使用（无需 Node.js）
+
+如果你希望普通用户不装 Node.js、也不运行命令行，直接双击就能用：
+
+1. 在你的开发机执行：`npm run release`
+2. 命令会自动输出最终产物路径：
+  - 优先：便携版 `.exe`
+  - 回退：`dist/capslock-win-unpacked.zip`
+3. 将该产物发给其他用户即可
+
+说明：
+- 便携版是单文件 EXE，不需要安装步骤
+- 当前应用要求管理员权限运行（用于全局钩子与注册表功能），用户双击时会弹出 UAC 提示
+- 如果需要桌面图标、开始菜单等安装体验，改用 `npm run build`（NSIS 安装包）
+- 如需跳过权限检查直接尝试原始打包命令：`npm run build:portable:raw`
+
+打包常见问题（Windows）：
+- 若 `npm run build:portable` 失败并出现 "Cannot create symbolic link"，通常是系统不允许当前终端创建符号链接
+- 解决方式：
+  1. 使用管理员 PowerShell 执行打包
+  2. 或在 Windows 打开"开发者模式"后重试
+- 若暂时无法解决，可先分发 `dist/win-unpacked/` 整个目录，用户运行其中的 `capslock.exe`
+- 不要只拷贝 `capslock.exe` 单个文件，否则可能出现“找不到 ffmpeg.dll”弹窗
+- 可用 `npm run package:win-unpacked` 一键生成 `dist/capslock-win-unpacked.zip` 再分发
 
 ---
 
@@ -113,6 +154,19 @@ npm start
    - **宏** — 添加多个步骤，支持按下键、松开键、输入文字、毫秒延迟
 5. 点击"**保存配置**"
 6. 切换到目标应用程序，按 Caps Lock 即可触发对应动作
+
+### 快捷切换配置
+
+- 全局快捷键：`Ctrl + Alt + ]`
+- 每按一次会切换到下一个配置方案，并在界面提示当前配置名称
+- 也可通过托盘菜单中的"切换到下一个配置"执行
+
+### 一键游戏模式
+
+- 全局快捷键：`Ctrl + Alt + G`
+- 可点击窗口顶部 `GM` 按钮快速开关
+- 可通过托盘菜单中的"开启游戏模式 / 关闭游戏模式"切换
+- 游戏模式开启后，Caps Lock 仍会被拦截，但不会触发任何映射动作
 
 ### 启用完全抑制（消除 Caps Lock LED 闪烁）
 
@@ -227,7 +281,10 @@ CAPSLOCK/
 企业代理问题。使用 `NODE_OPTIONS="--use-system-ca" npm install`。
 
 **Q: 应用启动崩溃，报 `Cannot read properties of undefined (reading 'requestSingleInstanceLock')`**
-环境变量 `ELECTRON_RUN_AS_NODE=1` 使 Electron 以纯 Node.js 模式运行，导致 `require('electron')` 返回路径字符串而非模块。使用 `npm start`（已内置 `env -u ELECTRON_RUN_AS_NODE`）即可，或手动执行前先 `unset ELECTRON_RUN_AS_NODE`。
+环境变量 `ELECTRON_RUN_AS_NODE=1` 会让 Electron 以纯 Node.js 模式运行，导致 `require('electron')` 返回路径字符串而非模块。当前 `npm start` 会自动清理该变量并启动应用；若你是手动执行 Electron，请先清理该变量再运行。
+
+**Q: 窗口顶部有黑色菜单栏（File / Edit / View / Window / Help）怎么处理？**
+当前版本默认隐藏该菜单栏。若你按下 `Alt`，Windows 仍会临时显示菜单栏，这是系统默认行为。
 
 ---
 
@@ -327,10 +384,24 @@ The first install downloads ~300-400 packages including the Electron binary (~10
 npm start
 ```
 
+If you want to test **full suppression** (registry write), launch the terminal as Administrator before running `npm start`.
+
+PowerShell (recommended):
+
+```powershell
+Start-Process powershell -Verb RunAs -WorkingDirectory "C:\\Users\\14238\\Desktop\\code\\CAPSLOCK"
+```
+
+Then run in the elevated PowerShell window:
+
+```powershell
+npm start
+```
+
 Signs of a successful launch:
 
 - A CAPSLOCK icon appears in the system tray
-- The terminal prints `[hook] mode=DIRECT(CapsLock)  keycode=0x3a` confirming the keyboard hook is active
+- The terminal prints `[hook] Starting with hook-based CapsLock suppression` confirming the keyboard hook is active
 - If a Windows Firewall prompt appears, click **Allow access**
 
 ### All scripts
@@ -340,6 +411,33 @@ Signs of a successful launch:
 | `npm start` | Launch the app (normal mode) |
 | `npm run dev` | Launch with Node.js inspector on port 5858 (attach Chrome DevTools) |
 | `npm run build` | Package into a Windows NSIS installer (.exe), output in `dist/` |
+| `npm run build:portable` | Package as a portable single-file EXE (no installer) with permission pre-check |
+| `npm run release` | One-command release: prefer portable EXE, fallback to `win-unpacked.zip` |
+
+### Distribute to non-developers (no Node.js required)
+
+If you want other users to run the app by double-clicking an EXE:
+
+1. Run on your development machine: `npm run release`
+2. The command prints the final artifact path automatically:
+  - Preferred: portable `.exe`
+  - Fallback: `dist/capslock-win-unpacked.zip`
+3. Share that artifact with users
+
+Notes:
+- Portable build is a single-file EXE and does not require an installer
+- This app requests administrator privileges for global hook and registry features, so users will see a UAC prompt on launch
+- If you want installer UX (desktop/start-menu shortcuts), use `npm run build` instead
+- To run the original builder command without the pre-check, use `npm run build:portable:raw`
+
+Common build issue on Windows:
+- If `npm run build:portable` fails with "Cannot create symbolic link", your current shell likely lacks symlink privilege
+- Fix options:
+  1. Run build in elevated PowerShell (Run as Administrator)
+  2. Or enable Windows Developer Mode and retry
+- Temporary fallback: distribute the whole `dist/win-unpacked/` folder and ask users to run `capslock.exe`
+- Do not copy only `capslock.exe`, or users may see a missing `ffmpeg.dll` popup
+- You can run `npm run package:win-unpacked` to create `dist/capslock-win-unpacked.zip` for safer sharing
 
 ---
 
@@ -354,6 +452,19 @@ Signs of a successful launch:
    - **Macro** — add ordered steps: keydown, keyup, type text, or insert a delay in milliseconds
 5. Click **Save Profile**
 6. Switch to the target application and press Caps Lock to trigger the action
+
+### Quick profile switching
+
+- Global shortcut: `Ctrl + Alt + ]`
+- Each press switches to the next profile and shows a UI toast with the current profile name
+- You can also trigger this from tray menu: **Switch to Next Profile**
+
+### One-click game mode
+
+- Global shortcut: `Ctrl + Alt + G`
+- Use the `GM` button in the header for quick toggle
+- You can also toggle from tray menu: **Enable Game Mode / Disable Game Mode**
+- When game mode is on, Caps Lock is still intercepted but no mapping action is executed
 
 ### Enabling full Caps Lock suppression
 
@@ -468,7 +579,10 @@ Fixed in the current version. Hold your modifier keys (Ctrl / Shift / Alt / Win)
 Corporate proxy issue. Run `NODE_OPTIONS="--use-system-ca" npm install`.
 
 **App crashes on startup: `Cannot read properties of undefined (reading 'requestSingleInstanceLock')`**
-The environment variable `ELECTRON_RUN_AS_NODE=1` is set, causing Electron to behave as plain Node.js so `require('electron')` returns a path string instead of the module. The `npm start` script already includes `env -u ELECTRON_RUN_AS_NODE` to strip this. If running manually, unset it first: `unset ELECTRON_RUN_AS_NODE`.
+If `ELECTRON_RUN_AS_NODE=1` is set, Electron behaves as plain Node.js and `require('electron')` returns a path string instead of the module. The current `npm start` script clears this variable automatically before launch. If you run Electron manually, clear the variable first.
+
+**How do I hide the black menu bar (File / Edit / View / Window / Help)?**
+The current version hides it by default. Pressing `Alt` can still reveal it temporarily on Windows, which is expected system behavior.
 
 ---
 

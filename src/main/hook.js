@@ -1,10 +1,8 @@
 // hook.js — Keyboard hook using uiohook-napi (N-API, no rebuild needed)
 //
-// Two modes depending on whether the OS-level scancode map is applied:
-//   - NORMAL mode  : watches for UiohookKey.CapsLock (no OS-level suppression;
-//                    Caps Lock LED will still toggle until you apply the remap)
-//   - REMAPPED mode: watches for UiohookKey.F13 (Caps Lock → F13 at driver level
-//                    via registry scancode map; full suppression, no LED toggle)
+// CapsLock suppression is now handled purely through the keyboard hook
+// by intercepting and consuming the CapsLock keydown event before it
+// reaches the system. No registry modification required.
 
 let uIOhook    = null
 let UiohookKey = null
@@ -35,12 +33,11 @@ function buildModifierSet () {
 const MODIFIER_KEYCODES = buildModifierSet()
 
 const { IPC } = require('../shared/constants')
-const registry = require('./registry')
 
 let enabled    = true
 let recording  = false
 let mainWindow = null
-let targetKeycode = null  // set in start()
+let suppressionEnabled = true  // Enable CapsLock suppression by default
 
 function getProfileManager () { return require('./profile-manager') }
 function getKeySimulator   () { return require('./key-simulator')   }
@@ -74,6 +71,34 @@ function toConfigKey (uiohookName) {
   return UIOHOOK_NAME_ALIASES[lower] ?? lower
 }
 
+// Force CapsLock LED off using keybd_event
+function turnOffCapsLockLED () {
+  try {
+    const koffi = require('koffi')
+    const user32 = koffi.load('user32.dll')
+    const GetKeyState = user32.func('short GetKeyState(int nVirtKey)')
+    const keybd_event = user32.func('void keybd_event(uint8 bVk, uint8 bScan, uint32 dwFlags, uint32 dwExtraInfo)')
+    const VK_CAPITAL        = 0x14
+    const KEYEVENTF_KEYDOWN = 0x0000
+    const KEYEVENTF_KEYUP   = 0x0002
+    
+    const isToggled = (GetKeyState(VK_CAPITAL) & 0x0001) !== 0
+    if (isToggled) {
+      // Toggle CapsLock off by simulating a keypress
+      keybd_event(VK_CAPITAL, 0x3A, KEYEVENTF_KEYDOWN, 0)
+      keybd_event(VK_CAPITAL, 0x3A, KEYEVENTF_KEYUP,   0)
+    }
+  } catch { /* koffi not available — non-fatal */ }
+}
+
+// Prevent CapsLock state from toggling by immediately un-toggling it
+function preventCapsLockToggle () {
+  // Schedule the LED correction after a small delay to let the toggle happen first
+  setImmediate(() => {
+    turnOffCapsLockLED()
+  })
+}
+
 function start (win) {
   if (!uIOhook || !UiohookKey) {
     console.warn('[hook] uiohook-napi not loaded — keyboard hook disabled')
@@ -82,15 +107,10 @@ function start (win) {
 
   mainWindow = win
 
-  const remapped = registry.isRemapped()
-  targetKeycode  = remapped ? UiohookKey.F13 : UiohookKey.CapsLock
-
-  console.log(
-    `[hook] mode=${remapped ? 'REMAPPED(F13)' : 'DIRECT(CapsLock)'}  ` +
-    `keycode=0x${targetKeycode.toString(16)}`
-  )
-
-  if (!remapped) normalizeCapsLockState()
+  console.log('[hook] Starting with hook-based CapsLock suppression')
+  
+  // Ensure CapsLock LED is off at startup
+  turnOffCapsLockLED()
 
   uIOhook.on('keydown', handleKeydown)
   uIOhook.on('keyup',   handleKeyup)
@@ -98,9 +118,24 @@ function start (win) {
 }
 
 function handleKeydown (event) {
-  if (event.keycode === targetKeycode) {
-    if (!enabled) return
+  const isCapsLockEvent = event.keycode === UiohookKey.CapsLock
+  const isRemappedCapsEvent = event.keycode === UiohookKey.F13
+
+  // Handle CapsLock from direct key events and registry-remapped F13 events
+  if (isCapsLockEvent || isRemappedCapsEvent) {
+    if (!enabled) {
+      // If hook is disabled, let CapsLock work normally
+      return
+    }
+    
+    // Suppress the CapsLock toggle effect
+    if (isCapsLockEvent && suppressionEnabled) {
+      preventCapsLockToggle()
+    }
+    
     if (recording) return  // don't trigger action while recording a different key
+
+    if (getProfileManager().isGameModeEnabled()) return
 
     const profile = getProfileManager().getActiveProfile()
     if (profile && profile.mapping) {
@@ -154,31 +189,34 @@ function setEnabled (val)  { enabled = !!val }
 function isEnabled  ()     { return enabled }
 function startRecording () { recording = true }
 function stopRecording  () { recording = false }
-function getStatus ()      { return { enabled, running: true } }
+function getStatus () {
+  const profileManager = getProfileManager()
+  return {
+    enabled,
+    running: true,
+    suppression: suppressionEnabled,
+    gameMode: profileManager.isGameModeEnabled(),
+    manualProfileId: profileManager.getManualProfileId()
+  }
+}
 
-// Force Caps Lock OFF on startup (only needed in DIRECT/non-remapped mode).
-// If the registry scancode map is active, CapsLock can never reach the OS
-// so there is nothing to clear.
-function normalizeCapsLockState () {
-  try {
-    const koffi = require('koffi')
-    const user32 = koffi.load('user32.dll')
-    const GetKeyState = user32.func('short GetKeyState(int nVirtKey)')
-    const keybd_event = user32.func('void keybd_event(uint8 bVk, uint8 bScan, uint32 dwFlags, uint32 dwExtraInfo)')
-    const VK_CAPITAL        = 0x14
-    const KEYEVENTF_KEYDOWN = 0x0000
-    const KEYEVENTF_KEYUP   = 0x0002
-    const isToggled = (GetKeyState(VK_CAPITAL) & 0x0001) !== 0
-    if (isToggled) {
-      keybd_event(VK_CAPITAL, 0x3A, KEYEVENTF_KEYDOWN, 0)
-      keybd_event(VK_CAPITAL, 0x3A, KEYEVENTF_KEYUP,   0)
-    }
-  } catch { /* koffi not available — non-fatal */ }
+// Set suppression mode
+function setSuppression (val) {
+  suppressionEnabled = !!val
+  if (suppressionEnabled) {
+    turnOffCapsLockLED()
+  }
+}
+
+function isSuppressionEnabled () {
+  return suppressionEnabled
 }
 
 module.exports = {
   start, stop,
   setEnabled, isEnabled,
   startRecording, stopRecording,
-  getStatus
+  getStatus,
+  setSuppression, isSuppressionEnabled,
+  turnOffCapsLockLED
 }

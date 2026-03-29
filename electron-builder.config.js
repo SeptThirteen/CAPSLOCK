@@ -14,6 +14,7 @@ module.exports = {
   win: {
     target: [{ target: 'nsis', arch: ['x64'] }],
     icon: 'assets/icon.ico',
+    signAndEditExecutable: false,
     requestedExecutionLevel: 'requireAdministrator'
   },
   nsis: {

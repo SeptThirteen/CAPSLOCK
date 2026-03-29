@@ -21,6 +21,8 @@ const defaultConfig = {
 
 let store = null
 let config = null
+let manualProfileId = null
+let gameModeEnabled = false
 
 function load () {
   store = new Store({ name: 'config', defaults: defaultConfig })
@@ -45,12 +47,26 @@ function saveAll (newConfig) {
   config = newConfig
   store.store = config
 
+  if (manualProfileId && !config.profiles.some(p => p.id === manualProfileId)) {
+    manualProfileId = null
+  }
+
   if (typeof config.macroSpeedMs === 'number') {
     require('./key-simulator').setAutoDelay(config.macroSpeedMs)
   }
 }
 
 function getActiveProfile () {
+  if (manualProfileId) {
+    const manual = config?.profiles?.find(p => p.id === manualProfileId)
+    if (manual) return manual
+    manualProfileId = null
+  }
+
+  return getMatchedProfile()
+}
+
+function getMatchedProfile () {
   if (!config || !config.profiles || config.profiles.length === 0) return null
 
   const { processName, windowTitle } = windowDetector.getCachedWindow()
@@ -65,6 +81,46 @@ function getActiveProfile () {
 
   // Fallback: default profile (matcher === null)
   return config.profiles.find(p => p.matcher === null) || config.profiles[0]
+}
+
+function cycleProfile (direction = 1) {
+  if (!config || !Array.isArray(config.profiles) || config.profiles.length === 0) return null
+
+  const list = config.profiles
+  const step = direction >= 0 ? 1 : -1
+  let currentIndex = list.findIndex(p => p.id === manualProfileId)
+
+  if (currentIndex < 0) {
+    const active = getMatchedProfile()
+    currentIndex = list.findIndex(p => p.id === active?.id)
+  }
+  if (currentIndex < 0) currentIndex = 0
+
+  const nextIndex = (currentIndex + step + list.length) % list.length
+  manualProfileId = list[nextIndex].id
+  return list[nextIndex]
+}
+
+function clearManualProfile () {
+  manualProfileId = null
+}
+
+function getManualProfileId () {
+  return manualProfileId
+}
+
+function setGameModeEnabled (enabled) {
+  gameModeEnabled = !!enabled
+  return gameModeEnabled
+}
+
+function toggleGameMode () {
+  gameModeEnabled = !gameModeEnabled
+  return gameModeEnabled
+}
+
+function isGameModeEnabled () {
+  return gameModeEnabled
 }
 
 function matchesWindow (matcher, processName, windowTitle) {
@@ -111,4 +167,17 @@ function createProfile () {
   }
 }
 
-module.exports = { load, getAll, saveAll, getActiveProfile, createProfile, generateId }
+module.exports = {
+  load,
+  getAll,
+  saveAll,
+  getActiveProfile,
+  createProfile,
+  generateId,
+  cycleProfile,
+  clearManualProfile,
+  getManualProfileId,
+  setGameModeEnabled,
+  toggleGameMode,
+  isGameModeEnabled
+}

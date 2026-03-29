@@ -14,6 +14,7 @@
       <div class="header-right">
         <button id="lang-btn" class="lang-btn">EN</button>
         <button id="theme-btn" class="theme-btn">&#9789;</button>
+        <button id="game-mode-btn" class="game-mode-btn" title="Game Mode">GM</button>
         <div class="toggle-wrap">
           <span class="toggle-label" id="status-label">已启用</span>
           <label class="toggle">
@@ -28,11 +29,27 @@
       <button id="banner-btn" class="btn btn-accent" data-i18n="banner.enableBtn" style="padding:4px 12px;font-size:11px;">启用完全抑制（需要重启）</button>
       <button id="banner-dismiss" class="btn" style="padding:4px 8px;font-size:11px;">✕</button>
     </div>
+    <!-- Validation warning banner -->
+    <div id="banner-validation" style="display:none;" class="banner-validation">
+      <span id="validation-text"></span>
+      <button id="validation-dismiss" class="btn" style="padding:4px 8px;font-size:11px;">✕</button>
+    </div>
     <div id="content">
       <aside id="sidebar">
         <div class="sidebar-header" data-i18n="sidebar.profiles">配置方案</div>
+        <!-- Search box -->
+        <div class="search-box">
+          <input type="text" id="search-input" data-i18n-placeholder="sidebar.search" placeholder="搜索配置..." autocomplete="off" spellcheck="false">
+          <span class="search-clear" id="search-clear" style="display:none;">✕</span>
+        </div>
         <div class="profile-list" id="profile-list"></div>
+        <div class="no-results" id="no-results" style="display:none;" data-i18n="sidebar.noResults">无匹配的配置</div>
         <button class="add-profile-btn" id="add-profile-btn" data-i18n="sidebar.addProfile">+ 新建配置</button>
+        <!-- Import/Export buttons -->
+        <div class="import-export-section">
+          <button class="btn btn-small" id="export-btn" title="Export">📤</button>
+          <button class="btn btn-small" id="import-btn" title="Import">📥</button>
+        </div>
         <div class="sidebar-footer">
           <div class="active-app-label" data-i18n="sidebar.activeApp">当前应用</div>
           <div class="active-app-value" id="active-app-display">—</div>

@@ -153,26 +153,36 @@ export function createMappingEditor (initialMapping, onRecordRequest) {
           <option value="keyup"    ${step.type === 'keyup'    ? 'selected' : ''}>${t('mapping.stepKeyup')}</option>
           <option value="type"     ${step.type === 'type'     ? 'selected' : ''}>${t('mapping.stepType')}</option>
           <option value="delay"    ${step.type === 'delay'    ? 'selected' : ''}>${t('mapping.stepDelay')}</option>
+          <option value="launch"   ${step.type === 'launch'   ? 'selected' : ''}>${t('mapping.stepLaunch')}</option>
         </select>
         ${valueField}
         <button class="del-step" data-idx="${i}" title="Delete step">×</button>
       `
       row.querySelector('.step-type').addEventListener('change', e => {
         const type = e.target.value
-        mapping.sequence[i] = type === 'delay' ? { type, ms: 100 }
-          : type === 'type' ? { type, text: '' }
-          : { type, key: '' }
+        if (type === 'delay') mapping.sequence[i] = { type, ms: 100 }
+        else if (type === 'type') mapping.sequence[i] = { type, text: '' }
+        else if (type === 'launch') mapping.sequence[i] = { type, path: '', args: '' }
+        else mapping.sequence[i] = { type, key: '' }
         renderMacroSteps(body)
       })
-      const valInput = row.querySelector('.step-value')
-      if (valInput) {
+      
+      // Handle value inputs
+      const valInputs = row.querySelectorAll('.step-value')
+      valInputs.forEach(valInput => {
         valInput.addEventListener('input', e => {
           const type = mapping.sequence[i].type
+          const field = e.target.dataset.field || 'value'
           if (type === 'delay') mapping.sequence[i].ms = parseInt(e.target.value, 10) || 0
           else if (type === 'type') mapping.sequence[i].text = e.target.value
+          else if (type === 'launch') {
+            if (field === 'path') mapping.sequence[i].path = e.target.value
+            else if (field === 'args') mapping.sequence[i].args = e.target.value
+          }
           else mapping.sequence[i].key = e.target.value.trim().toLowerCase()
         })
-      }
+      })
+      
       row.querySelector('.del-step').addEventListener('click', () => {
         mapping.sequence.splice(i, 1)
         renderMacroSteps(body)
@@ -194,6 +204,11 @@ export function createMappingEditor (initialMapping, onRecordRequest) {
       return `<input class="step-value" type="text" value="${esc(step.text || '')}" placeholder="${t('mapping.stepTypePlaceholder')}" spellcheck="false">`
     } else if (step.type === 'delay') {
       return `<input class="step-value" type="number" min="0" max="10000" value="${step.ms ?? 100}" style="width:80px;">`
+    } else if (step.type === 'launch') {
+      return `
+        <input class="step-value" data-field="path" type="text" value="${esc(step.path || '')}" placeholder="${t('mapping.stepLaunchPath')}" spellcheck="false" autocomplete="off" style="flex:1;">
+        <input class="step-value" data-field="args" type="text" value="${esc(step.args || '')}" placeholder="${t('mapping.stepLaunchArgs')}" spellcheck="false" autocomplete="off" style="width:100px;">
+      `
     }
     return ''
   }

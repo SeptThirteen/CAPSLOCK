@@ -4,9 +4,15 @@
   "description": "Remap Caps Lock to any key, combo, or macro with per-application profiles",
   "main": "src/main/index.js",
   "scripts": {
-    "start": "env -u ELECTRON_RUN_AS_NODE electron .",
+    "start": "node scripts/run-electron.js",
     "build": "electron-builder --win --x64",
-    "dev": "env -u ELECTRON_RUN_AS_NODE electron . --inspect=5858"
+    "build:installer": "electron-builder --win nsis --x64",
+    "build:dir": "electron-builder --win dir --x64",
+    "build:portable": "powershell -ExecutionPolicy Bypass -File ./scripts/build-portable.ps1",
+    "build:portable:raw": "electron-builder --win portable --x64",
+    "package:win-unpacked": "powershell -ExecutionPolicy Bypass -File ./scripts/package-win-unpacked.ps1",
+    "release": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1",
+    "dev": "node scripts/run-electron.js --inspect=5858"
   },
   "dependencies": {
     "electron-store": "^8.1.0",

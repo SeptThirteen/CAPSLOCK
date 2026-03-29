@@ -10,6 +10,9 @@ const LABELS = {
   zh: {
     tooltip:  'CAPSLOCK - 按键重映射',
     showHide: '显示 / 隐藏',
+    nextProfile: '切换到下一个配置',
+    gameModeOn: '开启游戏模式',
+    gameModeOff: '关闭游戏模式',
     disable:  '禁用映射',
     enable:   '启用映射',
     quit:     '退出'
@@ -17,6 +20,9 @@ const LABELS = {
   en: {
     tooltip:  'CAPSLOCK - Key Remapper',
     showHide: 'Show / Hide',
+    nextProfile: 'Switch to Next Profile',
+    gameModeOn: 'Enable Game Mode',
+    gameModeOff: 'Disable Game Mode',
     disable:  'Disable Remapping',
     enable:   'Enable Remapping',
     quit:     'Quit'
@@ -64,7 +70,10 @@ function setTrayLang (lang) {
 function updateContextMenu () {
   if (!tray) return
   const hook = require('./hook')
+  const profileManager = require('./profile-manager')
+  const { IPC } = require('../shared/constants')
   const enabled = hook.isEnabled()
+  const gameModeEnabled = profileManager.isGameModeEnabled()
   const L = LABELS[_lang]
 
   const menu = Menu.buildFromTemplate([
@@ -75,9 +84,29 @@ function updateContextMenu () {
       click: () => toggleWindow()
     },
     {
+      label: L.nextProfile,
+      click: () => {
+        const profile = profileManager.cycleProfile(1)
+        if (_mainWindow && !_mainWindow.isDestroyed() && profile) {
+          _mainWindow.webContents.send(IPC.PROFILE_CYCLED, { id: profile.id, name: profile.name })
+          _mainWindow.webContents.send(IPC.HOOK_STATUS_CHANGED, hook.getStatus())
+        }
+      }
+    },
+    {
+      label: gameModeEnabled ? L.gameModeOff : L.gameModeOn,
+      click: () => {
+        const nextEnabled = profileManager.toggleGameMode()
+        updateContextMenu()
+        if (_mainWindow && !_mainWindow.isDestroyed()) {
+          _mainWindow.webContents.send(IPC.GAME_MODE_CHANGED, { enabled: nextEnabled })
+          _mainWindow.webContents.send(IPC.HOOK_STATUS_CHANGED, hook.getStatus())
+        }
+      }
+    },
+    {
       label: enabled ? L.disable : L.enable,
       click: () => {
-        const { IPC } = require('../shared/constants')
         hook.setEnabled(!enabled)
         updateContextMenu()
         if (_mainWindow && !_mainWindow.isDestroyed()) {

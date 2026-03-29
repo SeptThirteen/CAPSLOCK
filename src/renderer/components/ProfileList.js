@@ -3,19 +3,43 @@
 
 import { t } from '../i18n.js'
 
-export function renderProfileList (el, profiles, selectedId, callbacks) {
+export function renderProfileList (el, profiles, selectedId, callbacks, options = {}) {
+  const { conflicts = [], searchTerm = '' } = options
+  const conflictIds = new Set(conflicts.flatMap(c => c.profiles || []))
+  
   el.innerHTML = ''
-  profiles.forEach(p => {
+  
+  // Filter profiles based on search term
+  let filteredProfiles = profiles
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase()
+    filteredProfiles = profiles.filter(p => {
+      const nameMatch = (p.name || '').toLowerCase().includes(term)
+      const processMatch = (p.matcher?.processName || '').toLowerCase().includes(term)
+      const titleMatch = (p.matcher?.windowTitle || '').toLowerCase().includes(term)
+      return nameMatch || processMatch || titleMatch
+    })
+  }
+  
+  filteredProfiles.forEach(p => {
     const item = document.createElement('div')
-    item.className = 'profile-item' + (p.id === selectedId ? ' active' : '')
+    const hasConflict = conflictIds.has(p.id)
+    item.className = 'profile-item' + 
+      (p.id === selectedId ? ' active' : '') +
+      (hasConflict ? ' has-conflict' : '')
     item.dataset.id = p.id
     item.innerHTML = `
       <span class="dot"></span>
       <span class="name">${esc(p.name || t('profile.unnamed'))}</span>
     `
+    if (hasConflict) {
+      item.title = t('validation.duplicateProcess')
+    }
     item.addEventListener('click', () => callbacks.onSelect(p.id))
     el.appendChild(item)
   })
+  
+  return { filtered: filteredProfiles.length, total: profiles.length }
 }
 
 function esc (str) {
